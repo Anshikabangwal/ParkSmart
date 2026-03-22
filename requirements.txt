@@ -1,0 +1,20 @@
+# requirements.txt
+# -----------------
+# Install all dependencies with:
+#   pip install -r requirements.txt
+
+# Core
+flask
+
+# Image processing & vehicle detection
+opencv-python
+numpy
+
+# Number plate reading (OCR)
+easyocr
+
+# Image handling
+Pillow
+
+# Utilities
+python-dotenv

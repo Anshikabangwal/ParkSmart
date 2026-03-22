@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ParkSmart — Camera</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:#0d1117; --surface:#161b24; --panel:#1c2433;
+      --border:rgba(255,255,255,0.08); --text:#dde4ee; --muted:#4a5a6a;
+      --accent:#00e5a0; --free:#00e58a; --occ:#ff5252;
+      --entry-c:#00e58a; --exit-c:#ff5252;
+    }
+    body { background:var(--bg); color:var(--text); font-family:'DM Sans',sans-serif; min-height:100vh; display:flex; flex-direction:column; }
+
+    /* HEADER */
+    header { display:flex; align-items:center; justify-content:space-between; padding:0 28px; height:54px; background:var(--surface); border-bottom:1px solid var(--border); }
+    .logo { font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:4px; color:var(--accent); }
+    .logo span { color:var(--text); }
+    nav { display:flex; gap:4px; }
+    nav a { padding:6px 16px; border-radius:6px; font-family:'DM Mono',monospace; font-size:11px; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); transition:all 0.2s; }
+    nav a:hover { background:rgba(255,255,255,0.05); color:var(--text); }
+    nav a.active { background:rgba(0,229,160,0.1); color:var(--accent); border:1px solid rgba(0,229,160,0.2); }
+    #clock { font-family:'DM Mono',monospace; font-size:13px; color:var(--muted); }
+
+    /* STATS */
+    .stats-bar { display:flex; background:var(--surface); border-bottom:1px solid var(--border); }
+    .stat { flex:1; text-align:center; padding:9px 0; border-right:1px solid var(--border); }
+    .stat:last-child { border-right:none; }
+    .stat-num { font-family:'Bebas Neue',sans-serif; font-size:26px; line-height:1; color:var(--text); }
+    .stat-num.g { color:var(--free); } .stat-num.r { color:var(--occ); }
+    .stat-label { font-family:'DM Mono',monospace; font-size:8px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); margin-top:2px; }
+
+    /* MAIN */
+    main { flex:1; padding:32px 28px; max-width:960px; width:100%; margin:0 auto; }
+    .page-title { font-family:'Bebas Neue',sans-serif; font-size:32px; letter-spacing:3px; color:var(--text); margin-bottom:6px; }
+    .page-sub { font-family:'DM Mono',monospace; font-size:11px; color:var(--muted); letter-spacing:1.5px; margin-bottom:32px; }
+
+    /* TWO PANELS SIDE BY SIDE */
+    .panels { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+    @media(max-width:660px) { .panels { grid-template-columns:1fr; } }
+
+    /* PANEL */
+    .panel { background:var(--surface); border:1px solid var(--border); border-radius:14px; overflow:hidden; }
+    .panel-header { padding:14px 20px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:10px; }
+    .panel-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+    .panel.entry .panel-dot { background:var(--entry-c); box-shadow:0 0 8px rgba(0,229,160,0.4); }
+    .panel.exit  .panel-dot { background:var(--exit-c);  box-shadow:0 0 8px rgba(255,82,82,0.4); }
+    .panel-title { font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:2px; }
+    .panel.entry .panel-title { color:var(--entry-c); }
+    .panel.exit  .panel-title { color:var(--exit-c); }
+    .panel-body { padding:20px; }
+
+    /* TABS: image vs manual */
+    .tabs { display:flex; gap:0; margin-bottom:18px; border:1px solid var(--border); border-radius:8px; overflow:hidden; }
+    .tab { flex:1; padding:8px; text-align:center; font-family:'DM Mono',monospace; font-size:10px; letter-spacing:1.5px; text-transform:uppercase; cursor:pointer; background:transparent; border:none; color:var(--muted); transition:all 0.2s; }
+    .tab.active { background:rgba(255,255,255,0.05); color:var(--text); }
+
+    /* FORM SECTIONS */
+    .form-section { display:none; }
+    .form-section.show { display:block; }
+
+    /* IMAGE UPLOAD AREA */
+    .upload-area { border:2px dashed var(--border); border-radius:10px; padding:24px; text-align:center; cursor:pointer; transition:border-color 0.2s; margin-bottom:14px; }
+    .upload-area:hover { border-color:rgba(255,255,255,0.2); }
+    .upload-area.entry:hover { border-color:rgba(0,229,160,0.4); }
+    .upload-area.exit:hover  { border-color:rgba(255,82,82,0.4); }
+    .upload-icon { font-size:28px; margin-bottom:8px; }
+    .upload-text { font-family:'DM Mono',monospace; font-size:11px; color:var(--muted); letter-spacing:1px; }
+    .upload-text span { display:block; font-size:9px; margin-top:4px; }
+    #entry-preview, #exit-preview { display:none; width:100%; max-height:160px; object-fit:cover; border-radius:8px; margin-bottom:14px; border:1px solid var(--border); }
+
+    /* FIELD */
+    .field { margin-bottom:14px; }
+    .field label { display:block; font-family:'DM Mono',monospace; font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); margin-bottom:6px; }
+    .field input, .field select { width:100%; background:#111620; border:1px solid var(--border); border-radius:8px; padding:10px 14px; color:var(--text); font-family:'DM Sans',sans-serif; font-size:14px; outline:none; transition:border-color 0.2s; }
+    .field input:focus { border-color:var(--accent); }
+    .field select option { background:var(--panel); }
+
+    /* SUBMIT BUTTONS */
+    .btn-entry, .btn-exit { width:100%; padding:12px; border-radius:8px; border:none; font-family:'DM Mono',monospace; font-size:12px; letter-spacing:2px; text-transform:uppercase; cursor:pointer; transition:opacity 0.2s,transform 0.15s; font-weight:500; margin-top:4px; }
+    .btn-entry { background:var(--entry-c); color:#0b0f14; }
+    .btn-exit  { background:var(--exit-c);  color:#fff; }
+    .btn-entry:hover, .btn-exit:hover { opacity:0.85; transform:translateY(-1px); }
+
+    /* HOW IT WORKS INFO BOX */
+    .info-box { background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:10px; padding:16px 20px; margin-top:24px; }
+    .info-title { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); margin-bottom:10px; }
+    .info-step { display:flex; gap:12px; align-items:flex-start; margin-bottom:8px; }
+    .info-step:last-child { margin-bottom:0; }
+    .step-num { font-family:'Bebas Neue',sans-serif; font-size:18px; color:var(--accent); line-height:1; flex-shrink:0; width:20px; }
+    .step-text { font-family:'DM Mono',monospace; font-size:11px; color:var(--muted); line-height:1.6; letter-spacing:0.5px; }
+
+    /* FLASH */
+    .flash-wrap { position:fixed; bottom:20px; right:20px; z-index:600; display:flex; flex-direction:column; gap:8px; max-width:380px; }
+    .flash { padding:12px 16px; border-radius:8px; font-family:'DM Mono',monospace; font-size:12px; border-left:3px solid var(--accent); background:var(--panel); animation:slideIn 0.3s ease; line-height:1.5; }
+    .flash.error { border-color:var(--occ); }
+    @keyframes slideIn { from{opacity:0;transform:translateX(14px)} to{opacity:1;transform:translateX(0)} }
+
+    footer { text-align:center; padding:20px; font-family:'DM Mono',monospace; font-size:10px; color:var(--muted); letter-spacing:1px; border-top:1px solid var(--border); margin-top:auto; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">PARK<span>SMART</span></div>
+  <nav>
+    <a href="{{ url_for('parking.index') }}">Lot Map</a>
+    <a href="{{ url_for('parking.camera') }}" class="active">Camera</a>
+    <a href="{{ url_for('parking.dashboard') }}">Dashboard</a>
+  </nav>
+  <div id="clock"></div>
+</header>
+
+<div class="stats-bar">
+  <div class="stat"><div class="stat-num">{{ total_slots }}</div><div class="stat-label">Total</div></div>
+  <div class="stat"><div class="stat-num g">{{ available_slots }}</div><div class="stat-label">Free</div></div>
+  <div class="stat"><div class="stat-num r">{{ occupied_slots }}</div><div class="stat-label">Occupied</div></div>
+  <div class="stat"><div class="stat-num">{{ total_slots - available_slots - occupied_slots }}</div><div class="stat-label">Reserved</div></div>
+</div>
+
+<div class="flash-wrap">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}{% for category, message in messages %}
+      <div class="flash {% if category == 'error' %}error{% endif %}">{{ message }}</div>
+    {% endfor %}{% endif %}
+  {% endwith %}
+</div>
+
+<main>
+  <div class="page-title">Camera Gate</div>
+  <div class="page-sub">// Simulate vehicle entry and exit using image upload or manual input</div>
+
+  <div class="panels">
+
+    <!-- ══ ENTRY PANEL ══ -->
+    <div class="panel entry">
+      <div class="panel-header">
+        <div class="panel-dot"></div>
+        <div class="panel-title">Entry Gate</div>
+      </div>
+      <div class="panel-body">
+
+        <!-- Mode tabs -->
+        <div class="tabs">
+          <button class="tab active" onclick="switchTab('entry','image',this)">Upload Image</button>
+          <button class="tab"        onclick="switchTab('entry','manual',this)">Manual Input</button>
+        </div>
+
+        <!-- IMAGE MODE -->
+        <div class="form-section show" id="entry-image-section">
+          <form method="POST" action="{{ url_for('parking.entry') }}" enctype="multipart/form-data">
+            <div class="upload-area entry" onclick="document.getElementById('entry-file').click()">
+              <div class="upload-icon">📷</div>
+              <div class="upload-text">
+                Click to upload entry camera image
+                <span>JPG, PNG, WEBP — OpenCV + EasyOCR will process it</span>
+              </div>
+            </div>
+            <img id="entry-preview" data-preview="entry-preview"/>
+            <input type="file" id="entry-file" name="image"
+                   accept="image/*" data-preview="entry-preview"
+                   style="display:none"/>
+            <button type="submit" class="btn-entry">&#9660; Process Entry</button>
+          </form>
+        </div>
+
+        <!-- MANUAL MODE -->
+        <div class="form-section" id="entry-manual-section">
+          <form method="POST" action="{{ url_for('parking.entry') }}">
+            <div class="field">
+              <label>Vehicle Number</label>
+              <input type="text" name="vehicle_number"
+                     placeholder="e.g. UP80AB1234" required/>
+            </div>
+            <div class="field">
+              <label>Vehicle Type</label>
+              <select name="vehicle_type">
+                <option value="car">🚗 Car / SUV</option>
+                <option value="bike">🛵 Bike / Scooter</option>
+              </select>
+            </div>
+            <button type="submit" class="btn-entry">&#9660; Simulate Entry</button>
+          </form>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ══ EXIT PANEL ══ -->
+    <div class="panel exit">
+      <div class="panel-header">
+        <div class="panel-dot"></div>
+        <div class="panel-title">Exit Gate</div>
+      </div>
+      <div class="panel-body">
+
+        <!-- Mode tabs -->
+        <div class="tabs">
+          <button class="tab active" onclick="switchTab('exit','image',this)">Upload Image</button>
+          <button class="tab"        onclick="switchTab('exit','manual',this)">Manual Input</button>
+        </div>
+
+        <!-- IMAGE MODE -->
+        <div class="form-section show" id="exit-image-section">
+          <form method="POST" action="{{ url_for('parking.exit_gate') }}" enctype="multipart/form-data">
+            <div class="upload-area exit" onclick="document.getElementById('exit-file').click()">
+              <div class="upload-icon">📷</div>
+              <div class="upload-text">
+                Click to upload exit camera image
+                <span>EasyOCR reads the plate and frees the slot</span>
+              </div>
+            </div>
+            <img id="exit-preview" data-preview="exit-preview"/>
+            <input type="file" id="exit-file" name="image"
+                   accept="image/*" data-preview="exit-preview"
+                   style="display:none"/>
+            <button type="submit" class="btn-exit">&#9650; Process Exit</button>
+          </form>
+        </div>
+
+        <!-- MANUAL MODE -->
+        <div class="form-section" id="exit-manual-section">
+          <form method="POST" action="{{ url_for('parking.exit_gate') }}">
+            <div class="field">
+              <label>Vehicle Number</label>
+              <input type="text" name="vehicle_number"
+                     placeholder="e.g. UP80AB1234" required/>
+            </div>
+            <button type="submit" class="btn-exit">&#9650; Simulate Exit</button>
+          </form>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <!-- HOW IT WORKS -->
+  <div class="info-box">
+    <div class="info-title">// How the automated pipeline works</div>
+    <div class="info-step">
+      <div class="step-num">1</div>
+      <div class="step-text">Entry camera captures vehicle → OpenCV detects type (car/bike) → EasyOCR reads number plate</div>
+    </div>
+    <div class="info-step">
+      <div class="step-num">2</div>
+      <div class="step-text">System finds the best free slot in the correct zone → creates a session → marks slot occupied</div>
+    </div>
+    <div class="info-step">
+      <div class="step-num">3</div>
+      <div class="step-text">Exit camera captures vehicle → EasyOCR reads plate → finds active session → calculates duration → frees slot</div>
+    </div>
+    <div class="info-step">
+      <div class="step-num">4</div>
+      <div class="step-text">Use Manual Input tab to test without a camera image — just type the vehicle number directly</div>
+    </div>
+  </div>
+
+</main>
+
+<footer>ParkSmart &copy; {{ current_year }} — Smart Parking Management System</footer>
+
+<script src="{{ url_for('static', filename='js/script.js') }}"></script>
+<script>
+  /* Clock */
+  function tick() {
+    document.getElementById('clock').textContent =
+      new Date().toLocaleTimeString('en-IN', { hour12: false });
+  }
+  setInterval(tick, 1000); tick();
+
+  /* Switch between image/manual tabs */
+  function switchTab(panel, mode, btn) {
+    const prefix = panel + '-';
+    document.getElementById(prefix + 'image-section').classList.remove('show');
+    document.getElementById(prefix + 'manual-section').classList.remove('show');
+    document.getElementById(prefix + mode + '-section').classList.add('show');
+    btn.closest('.tabs').querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+  }
+</script>
+</body>
+</html>
