@@ -26,7 +26,7 @@ ParkSmart/
 │   ├── css/style.css
 │   ├── js/script.js
 │   ├── images/
-│   └── uploads/          # Camera images saved here
+│   └── uploads/          # Camera images saved here at runtime
 ├── templates/
 │   ├── index.html        # Parking lot map
 │   ├── dashboard.html    # Attendant dashboard
@@ -35,6 +35,18 @@ ParkSmart/
 ├── config.py             # All configuration
 ├── requirements.txt      # Python dependencies
 └── README.md
+```
+
+---
+
+## Clone the Repository
+
+> You must be added as a collaborator by the repo owner before cloning.
+> Accept the invitation email from GitHub first.
+
+```bash
+git clone https://github.com/Anshikabangwal/ParkSmart.git
+cd ParkSmart
 ```
 
 ---
@@ -52,7 +64,7 @@ source venv/bin/activate     # Mac / Linux
 ```bash
 pip install -r requirements.txt
 ```
-> Note: First run downloads ~100MB EasyOCR language models automatically.
+> Note: First run downloads ~200MB EasyOCR language models automatically. This happens only once.
 
 ### 3. Initialize database
 ```bash
@@ -99,6 +111,15 @@ python app.py
 | `slots` | All 36 parking slots with current status |
 | `vehicles` | Every vehicle detected by entry camera |
 | `sessions` | Every parking visit (entry time → exit time) |
+
+---
+
+## Important Notes for Collaborators
+
+- `parking.db` is not on GitHub — run `python database/init_db.py` to create it
+- `venv/` is not on GitHub — create your own virtual environment
+- `static/uploads/` is empty on GitHub — images are saved here at runtime
+- EasyOCR models download automatically on first run (~200MB, one time only)
 
 ---
 
