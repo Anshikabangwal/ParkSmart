@@ -4,231 +4,465 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>ParkSmart — Dashboard</title>
-  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"/>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
     :root {
-      --bg:#0d1117; --surface:#161b24; --panel:#1c2433;
-      --border:rgba(255,255,255,0.08); --text:#dde4ee; --muted:#4a5a6a;
-      --accent:#00e5a0; --free:#00e58a; --occ:#ff5252; --res:#4da6ff;
+      --bg:            #F5F4F0;
+      --surface:       #ffffff;
+      --border:        #E0DED6;
+      --border-light:  #ECECEA;
+      --text:          #2C2C2A;
+      --muted:         #888780;
+      --hint:          #B4B2A9;
+
+      --car-free-bg:   #EAF3DE;
+      --car-free-b:    #97C459;
+      --car-free-t:    #27500A;
+      --car-occ-bg:    #FCEBEB;
+      --car-occ-b:     #F09595;
+      --car-occ-t:     #791F1F;
+
+      --zone-car-text: #3B6D11;
+      --zone-car-dot:  #639922;
+      --zone-bike-text:#854F0B;
+      --zone-bike-dot: #BA7517;
+
+      --active-bg:     #FCEBEB;
+      --active-b:      #F09595;
+      --active-t:      #791F1F;
+
+      --done-bg:       #EAF3DE;
+      --done-b:        #97C459;
+      --done-t:        #27500A;
+
+      --flag-bg:       #FAEEDA;
+      --flag-b:        #FAC775;
+      --flag-t:        #633806;
+
+      --info-bg:       #E6F1FB;
+      --info-b:        #85B7EB;
+      --info-t:        #0C447C;
     }
-    body { background:var(--bg); color:var(--text); font-family:'DM Sans',sans-serif; min-height:100vh; display:flex; flex-direction:column; }
 
-    /* HEADER */
-    header { display:flex; align-items:center; justify-content:space-between; padding:0 28px; height:54px; background:var(--surface); border-bottom:1px solid var(--border); }
-    .logo { font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:4px; color:var(--accent); }
-    .logo span { color:var(--text); }
-    nav { display:flex; gap:4px; }
-    nav a { padding:6px 16px; border-radius:6px; font-family:'DM Mono',monospace; font-size:11px; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); transition:all 0.2s; }
-    nav a:hover { background:rgba(255,255,255,0.05); color:var(--text); }
-    nav a.active { background:rgba(0,229,160,0.1); color:var(--accent); border:1px solid rgba(0,229,160,0.2); }
-    #clock { font-family:'DM Mono',monospace; font-size:13px; color:var(--muted); }
+    html, body { height: 100%; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 16px;
+    }
 
-    /* STATS */
-    .stats-bar { display:flex; background:var(--surface); border-bottom:1px solid var(--border); }
-    .stat { flex:1; text-align:center; padding:9px 0; border-right:1px solid var(--border); }
-    .stat:last-child { border-right:none; }
-    .stat-num { font-family:'Bebas Neue',sans-serif; font-size:26px; line-height:1; }
-    .stat-num.g { color:var(--free); } .stat-num.r { color:var(--occ); }
-    .stat-label { font-family:'DM Mono',monospace; font-size:8px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); margin-top:2px; }
+    /* ── WRAPPER ── */
+    .ps-wrap {
+      width: 80%;
+      height: 100%;
+      background: var(--bg);
+      border: 0.5px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
 
-    /* MAIN */
-    main { flex:1; padding:28px; display:flex; flex-direction:column; gap:28px; max-width:1200px; width:100%; margin:0 auto; }
+    /* ── HEADER ── */
+    header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 20px; height: 48px;
+      background: var(--surface);
+      border-bottom: 0.5px solid var(--border);
+      flex-shrink: 0;
+    }
+    .logo { font-size: 15px; font-weight: 500; letter-spacing: 2px; color: var(--text); }
+    .logo span { color: var(--muted); }
 
-    /* SECTION */
-    .sec-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
-    .sec-title { font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:2px; }
-    .sec-sub { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:1.5px; color:var(--muted); margin-top:2px; }
-    .badge { font-family:'DM Mono',monospace; font-size:11px; padding:4px 12px; border-radius:20px; letter-spacing:1px; }
-    .badge.red  { background:rgba(255,82,82,0.12);  color:var(--occ); border:1px solid rgba(255,82,82,0.25); }
-    .badge.blue { background:rgba(77,166,255,0.1);  color:var(--res); border:1px solid rgba(77,166,255,0.2); }
+    nav { display: flex; gap: 5px; }
+    nav a {
+      padding: 4px 13px; border-radius: 6px;
+      font-family: 'DM Mono', monospace; font-size: 11px;
+      letter-spacing: 1px; color: var(--muted);
+      border: 0.5px solid transparent;
+      text-decoration: none; transition: background 0.15s;
+    }
+    nav a:hover { background: var(--bg); color: var(--text); }
+    nav a.active {
+      background: var(--car-free-bg); color: var(--zone-car-text);
+      border-color: var(--car-free-b);
+    }
 
-    /* CARDS */
-    .cards-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:14px; }
-    .card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:18px 20px; position:relative; overflow:hidden; }
-    .card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; background:var(--occ); }
-    .card-slot { font-family:'Bebas Neue',sans-serif; font-size:30px; letter-spacing:2px; color:var(--accent); line-height:1; margin-bottom:4px; }
-    .card-vehicle { font-family:'DM Mono',monospace; font-size:13px; font-weight:500; color:var(--text); letter-spacing:1px; margin-bottom:10px; }
-    .card-meta { display:flex; flex-direction:column; gap:4px; margin-bottom:14px; }
-    .card-row { display:flex; justify-content:space-between; align-items:center; }
-    .card-key { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); }
-    .card-val { font-family:'DM Mono',monospace; font-size:11px; color:var(--text); }
-    .type-pill { display:inline-block; padding:2px 8px; border-radius:4px; font-family:'DM Mono',monospace; font-size:9px; letter-spacing:1px; text-transform:uppercase; }
-    .type-pill.car  { background:rgba(0,229,160,0.1);  color:var(--free); border:1px solid rgba(0,229,160,0.2); }
-    .type-pill.bike { background:rgba(255,136,85,0.1); color:#ff8855;     border:1px solid rgba(255,136,85,0.2); }
-    .btn-release { width:100%; padding:9px; border-radius:7px; border:1px solid rgba(255,82,82,0.3); background:rgba(255,82,82,0.08); color:var(--occ); font-family:'DM Mono',monospace; font-size:10px; letter-spacing:1.5px; text-transform:uppercase; cursor:pointer; transition:all 0.2s; }
-    .btn-release:hover { background:rgba(255,82,82,0.16); border-color:rgba(255,82,82,0.5); }
+    .hright { display: flex; align-items: center; gap: 14px; }
+    .live {
+      display: flex; align-items: center; gap: 6px;
+      font-family: 'DM Mono', monospace; font-size: 11px;
+      color: var(--zone-car-text); letter-spacing: 1px;
+    }
+    .live-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--zone-car-dot);
+      animation: blink 1.6s ease-in-out infinite;
+    }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+    #clock { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--hint); }
 
-    /* EMPTY STATE */
-    .empty { text-align:center; padding:40px; background:var(--surface); border:1px solid var(--border); border-radius:12px; font-family:'DM Mono',monospace; font-size:12px; color:var(--muted); }
+    /* ── STATS ── */
+    .stats-bar {
+      display: flex; background: var(--surface);
+      border-bottom: 0.5px solid var(--border); flex-shrink: 0;
+    }
+    .stat {
+      flex: 1; text-align: center; padding: 11px 0;
+      border-right: 0.5px solid var(--border);
+    }
+    .stat:last-child { border-right: none; }
+    .stat-num { font-size: 24px; font-weight: 500; line-height: 1; color: var(--text); }
+    .stat-num.g { color: var(--zone-car-text); }
+    .stat-num.r { color: var(--car-occ-t); }
+    .stat-label {
+      font-family: 'DM Mono', monospace; font-size: 9px;
+      letter-spacing: 1.5px; text-transform: uppercase;
+      color: var(--hint); margin-top: 3px;
+    }
 
-    /* TABLE */
-    .table-wrap { background:var(--surface); border:1px solid var(--border); border-radius:12px; overflow:hidden; }
-    .table-controls { display:flex; gap:10px; padding:12px 16px; border-bottom:1px solid var(--border); flex-wrap:wrap; }
-    .search-box { display:flex; align-items:center; gap:8px; background:var(--panel); border:1px solid var(--border); border-radius:7px; padding:7px 12px; flex:1; min-width:180px; }
-    .search-box input { background:none; border:none; outline:none; font-family:'DM Mono',monospace; font-size:12px; color:var(--text); width:100%; }
-    .search-box input::placeholder { color:var(--muted); }
-    .filter-sel { background:var(--panel); border:1px solid var(--border); border-radius:7px; padding:7px 12px; color:var(--text); font-family:'DM Mono',monospace; font-size:11px; outline:none; cursor:pointer; }
-    .filter-sel option { background:var(--panel); }
-    table { width:100%; border-collapse:collapse; }
-    thead { background:var(--panel); border-bottom:1px solid var(--border); }
-    th { padding:10px 16px; text-align:left; font-family:'DM Mono',monospace; font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); font-weight:400; }
-    tbody tr { border-bottom:1px solid rgba(255,255,255,0.04); transition:background 0.15s; }
-    tbody tr:last-child { border-bottom:none; }
-    tbody tr:hover { background:rgba(255,255,255,0.02); }
-    td { padding:10px 16px; font-family:'DM Mono',monospace; font-size:12px; color:var(--text); }
-    td.m { color:var(--muted); }
-    .status-pill { display:inline-block; padding:2px 10px; border-radius:4px; font-size:9px; letter-spacing:1.5px; text-transform:uppercase; }
-    .status-pill.active    { background:rgba(255,82,82,0.12);   color:var(--occ);  border:1px solid rgba(255,82,82,0.25); }
-    .status-pill.completed { background:rgba(0,229,160,0.1);    color:var(--free); border:1px solid rgba(0,229,160,0.2); }
-    .status-pill.flagged   { background:rgba(255,200,0,0.1);    color:#ffcc00;     border:1px solid rgba(255,200,0,0.2); }
-    .no-rows { text-align:center; padding:28px; font-family:'DM Mono',monospace; font-size:11px; color:var(--muted); }
+    /* ── MAIN ── */
+    .ps-main {
+      flex: 1; overflow-y: auto;
+      padding: 24px 28px;
+      display: flex; flex-direction: column; gap: 28px;
+    }
 
-    /* FLASH */
-    .flash-wrap { position:fixed; bottom:20px; right:20px; z-index:300; display:flex; flex-direction:column; gap:8px; }
-    .flash { padding:11px 16px; border-radius:8px; font-family:'DM Mono',monospace; font-size:12px; border-left:3px solid var(--accent); background:var(--panel); animation:slideIn 0.3s ease; }
-    .flash.error { border-color:var(--occ); }
+    /* ── SECTION HEAD ── */
+    .sec-head {
+      display: flex; align-items: center;
+      justify-content: space-between; margin-bottom: 14px;
+    }
+    .sec-title {
+      font-size: 16px; font-weight: 500;
+      color: var(--text); letter-spacing: 0.5px;
+    }
+    .sec-sub {
+      font-family: 'DM Mono', monospace; font-size: 10px;
+      letter-spacing: 1px; color: var(--hint); margin-top: 3px;
+    }
+    .badge {
+      font-family: 'DM Mono', monospace; font-size: 10px;
+      padding: 4px 12px; border-radius: 20px;
+      letter-spacing: 1px; border: 0.5px solid;
+    }
+    .badge.red  { background: var(--active-bg); color: var(--active-t); border-color: var(--active-b); }
+    .badge.blue { background: var(--info-bg);   color: var(--info-t);   border-color: var(--info-b); }
+
+    /* ── CARDS GRID ── */
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 12px;
+    }
+    .card {
+      background: var(--surface);
+      border: 0.5px solid var(--border);
+      border-radius: 10px;
+      padding: 16px 18px;
+      position: relative; overflow: hidden;
+    }
+    .card::before {
+      content: ''; position: absolute;
+      top: 0; left: 0; right: 0; height: 3px;
+      background: var(--car-occ-b);
+    }
+    .card-slot {
+      font-size: 26px; font-weight: 500;
+      letter-spacing: 1px; color: var(--zone-car-text);
+      line-height: 1; margin-bottom: 4px;
+      font-family: 'DM Mono', monospace;
+    }
+    .card-vehicle {
+      font-family: 'DM Mono', monospace; font-size: 13px;
+      font-weight: 500; color: var(--text);
+      letter-spacing: 1px; margin-bottom: 12px;
+    }
+    .card-meta { display: flex; flex-direction: column; gap: 5px; margin-bottom: 14px; }
+    .card-row { display: flex; justify-content: space-between; align-items: center; }
+    .card-key {
+      font-family: 'DM Mono', monospace; font-size: 9px;
+      letter-spacing: 1.5px; text-transform: uppercase; color: var(--hint);
+    }
+    .card-val { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); }
+
+    .type-pill {
+      display: inline-block; padding: 2px 8px; border-radius: 4px;
+      font-family: 'DM Mono', monospace; font-size: 9px;
+      letter-spacing: 1px; text-transform: uppercase;
+      border: 0.5px solid;
+    }
+    .type-pill.car  { background: var(--car-free-bg);  color: var(--car-free-t);  border-color: var(--car-free-b); }
+    .type-pill.bike { background: var(--flag-bg);       color: var(--flag-t);      border-color: var(--flag-b); }
+
+    .btn-release {
+      width: 100%; padding: 9px; border-radius: 7px;
+      border: 0.5px solid var(--active-b);
+      background: var(--active-bg); color: var(--active-t);
+      font-family: 'DM Mono', monospace; font-size: 10px;
+      letter-spacing: 1.5px; text-transform: uppercase;
+      cursor: pointer; transition: opacity 0.2s, transform 0.15s;
+    }
+    .btn-release:hover { opacity: 0.75; transform: translateY(-1px); }
+
+    /* ── EMPTY STATE ── */
+    .empty {
+      text-align: center; padding: 36px;
+      background: var(--surface);
+      border: 0.5px solid var(--border);
+      border-radius: 10px;
+      font-family: 'DM Mono', monospace; font-size: 12px;
+      color: var(--hint);
+    }
+
+    /* ── TABLE ── */
+    .table-wrap {
+      background: var(--surface);
+      border: 0.5px solid var(--border);
+      border-radius: 10px; overflow: hidden;
+    }
+    .table-controls {
+      display: flex; gap: 10px;
+      padding: 12px 16px;
+      border-bottom: 0.5px solid var(--border);
+      flex-wrap: wrap;
+    }
+    .search-box {
+      display: flex; align-items: center; gap: 8px;
+      background: var(--bg);
+      border: 0.5px solid var(--border);
+      border-radius: 7px; padding: 7px 12px;
+      flex: 1; min-width: 180px;
+    }
+    .search-box input {
+      background: none; border: none; outline: none;
+      font-family: 'DM Mono', monospace; font-size: 12px;
+      color: var(--text); width: 100%;
+    }
+    .search-box input::placeholder { color: var(--hint); }
+    .filter-sel {
+      background: var(--bg);
+      border: 0.5px solid var(--border);
+      border-radius: 7px; padding: 7px 12px;
+      color: var(--text);
+      font-family: 'DM Mono', monospace; font-size: 11px;
+      outline: none; cursor: pointer;
+    }
+    .filter-sel option { background: var(--surface); }
+
+    table { width: 100%; border-collapse: collapse; }
+    thead { background: var(--bg); border-bottom: 0.5px solid var(--border); }
+    th {
+      padding: 10px 16px; text-align: left;
+      font-family: 'DM Mono', monospace; font-size: 9px;
+      letter-spacing: 2px; text-transform: uppercase;
+      color: var(--hint); font-weight: 400;
+    }
+    tbody tr { border-bottom: 0.5px solid var(--border-light); transition: background 0.15s; }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: var(--bg); }
+    td {
+      padding: 10px 16px;
+      font-family: 'DM Mono', monospace; font-size: 12px;
+      color: var(--text);
+    }
+    td.m { color: var(--muted); }
+
+    .status-pill {
+      display: inline-block; padding: 2px 10px; border-radius: 4px;
+      font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase;
+      border: 0.5px solid;
+    }
+    .status-pill.active    { background: var(--active-bg); color: var(--active-t); border-color: var(--active-b); }
+    .status-pill.completed { background: var(--done-bg);   color: var(--done-t);   border-color: var(--done-b); }
+    .status-pill.flagged   { background: var(--flag-bg);   color: var(--flag-t);   border-color: var(--flag-b); }
+
+    .no-rows {
+      text-align: center; padding: 28px;
+      font-family: 'DM Mono', monospace; font-size: 11px; color: var(--hint);
+    }
+
+    /* ── FLASH ── */
+    .flash-wrap {
+      position: fixed; bottom: 20px; right: 20px;
+      z-index: 600; display: flex; flex-direction: column; gap: 8px;
+    }
+    .flash {
+      padding: 11px 16px; border-radius: 8px;
+      font-family: 'DM Mono', monospace; font-size: 12px;
+      border-left: 3px solid var(--zone-car-dot);
+      background: var(--surface);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+      animation: slideIn 0.3s ease;
+    }
+    .flash.error { border-color: var(--active-b); }
     @keyframes slideIn { from{opacity:0;transform:translateX(14px)} to{opacity:1;transform:translateX(0)} }
 
-    footer { text-align:center; padding:20px; font-family:'DM Mono',monospace; font-size:10px; color:var(--muted); letter-spacing:1px; border-top:1px solid var(--border); }
+    /* ── FOOTER ── */
+    footer {
+      text-align: center; padding: 12px 20px;
+      font-family: 'DM Mono', monospace; font-size: 10px;
+      color: var(--hint); letter-spacing: 1px;
+      border-top: 0.5px solid var(--border);
+      background: var(--surface); flex-shrink: 0;
+    }
+
+    @media(max-width:700px) { .ps-wrap { width: 100%; } }
   </style>
 </head>
 <body>
 
-<header>
-  <div class="logo">PARK<span>SMART</span></div>
-  <nav>
-    <a href="{{ url_for('parking.index') }}">Lot Map</a>
-    <a href="{{ url_for('parking.camera') }}">Camera</a>
-    <a href="{{ url_for('parking.dashboard') }}" class="active">Dashboard</a>
-  </nav>
-  <div id="clock"></div>
-</header>
+<div class="ps-wrap">
 
-<div class="stats-bar">
-  <div class="stat"><div class="stat-num">{{ total_slots }}</div><div class="stat-label">Total</div></div>
-  <div class="stat"><div class="stat-num g">{{ available_slots }}</div><div class="stat-label">Free</div></div>
-  <div class="stat"><div class="stat-num r">{{ occupied_slots }}</div><div class="stat-label">Occupied</div></div>
-  <div class="stat"><div class="stat-num">{{ active_sessions | length }}</div><div class="stat-label">Active</div></div>
-</div>
-
-<div class="flash-wrap">
-  {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}{% for category, message in messages %}
-      <div class="flash {% if category == 'error' %}error{% endif %}">{{ message }}</div>
-    {% endfor %}{% endif %}
-  {% endwith %}
-</div>
-
-<main>
-
-  <!-- ACTIVE SESSIONS -->
-  <section>
-    <div class="sec-head">
-      <div>
-        <div class="sec-title">Active Sessions</div>
-        <div class="sec-sub">// Vehicles currently parked</div>
-      </div>
-      <div class="badge red">{{ active_sessions | length }} parked</div>
+  <!-- HEADER -->
+  <header>
+    <div class="logo">Park<span>smart</span></div>
+    <nav>
+      <a href="{{ url_for('parking.index') }}">Lot Map</a>
+      <a href="{{ url_for('parking.camera') }}">Camera</a>
+      <a href="{{ url_for('parking.dashboard') }}" class="active">Dashboard</a>
+    </nav>
+    <div class="hright">
+      <div class="live"><div class="live-dot"></div>Live</div>
+      <div id="clock"></div>
     </div>
+  </header>
 
-    {% if active_sessions %}
-    <div class="cards-grid">
-      {% for s in active_sessions %}
-      <div class="card">
-        <div class="card-slot">{{ s.slot_number }}</div>
-        <div class="card-vehicle">{{ s.vehicle_number }}</div>
-        <div class="card-meta">
-          <div class="card-row">
-            <span class="card-key">Type</span>
-            <span class="type-pill {{ s.vehicle_type }}">
-              {% if s.vehicle_type == 'car' %}🚗{% else %}🛵{% endif %}
-              {{ s.vehicle_type }}
-            </span>
-          </div>
-          <div class="card-row">
-            <span class="card-key">Entry time</span>
-            <span class="card-val">{{ s.entry_time }}</span>
-          </div>
+  <!-- STATS -->
+  <div class="stats-bar">
+    <div class="stat"><div class="stat-num">{{ total_slots }}</div><div class="stat-label">Total</div></div>
+    <div class="stat"><div class="stat-num g">{{ available_slots }}</div><div class="stat-label">Free</div></div>
+    <div class="stat"><div class="stat-num r">{{ occupied_slots }}</div><div class="stat-label">Occupied</div></div>
+    <div class="stat"><div class="stat-num">{{ active_sessions | length }}</div><div class="stat-label">Active</div></div>
+  </div>
+
+  <!-- FLASH -->
+  <div class="flash-wrap">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}{% for category, message in messages %}
+        <div class="flash {% if category == 'error' %}error{% endif %}">{{ message }}</div>
+      {% endfor %}{% endif %}
+    {% endwith %}
+  </div>
+
+  <!-- MAIN -->
+  <div class="ps-main">
+
+    <!-- ACTIVE SESSIONS -->
+    <section>
+      <div class="sec-head">
+        <div>
+          <div class="sec-title">Active sessions</div>
+          <div class="sec-sub">Vehicles currently parked</div>
         </div>
-        <!-- Manual release form -->
-        <form class="release-form" method="POST"
-              action="{{ url_for('parking.release') }}"
-              data-vehicle="{{ s.vehicle_number }}">
-          <input type="hidden" name="vehicle_number" value="{{ s.vehicle_number }}"/>
-          <button type="submit" class="btn-release">&#9650; Release Slot</button>
-        </form>
+        <div class="badge red">{{ active_sessions | length }} parked</div>
       </div>
-      {% endfor %}
-    </div>
-    {% else %}
-    <div class="empty">No active sessions — all slots are free</div>
-    {% endif %}
-  </section>
 
-  <!-- SESSION HISTORY -->
-  <section>
-    <div class="sec-head">
-      <div>
-        <div class="sec-title">Session History</div>
-        <div class="sec-sub">// All parking sessions ever</div>
-      </div>
-      <div class="badge blue">{{ all_sessions | length }} total</div>
-    </div>
-
-    <div class="table-wrap">
-      <div class="table-controls">
-        <div class="search-box">
-          <span style="color:var(--muted);font-size:13px">⌕</span>
-          <input type="text" id="searchInput" placeholder="Search vehicle..."
-                 oninput="filterTable()"/>
+      {% if active_sessions %}
+      <div class="cards-grid">
+        {% for s in active_sessions %}
+        <div class="card">
+          <div class="card-slot">{{ s.slot_number }}</div>
+          <div class="card-vehicle">{{ s.vehicle_number }}</div>
+          <div class="card-meta">
+            <div class="card-row">
+              <span class="card-key">Type</span>
+              <span class="type-pill {{ s.vehicle_type }}">
+                {% if s.vehicle_type == 'car' %}🚗{% else %}🛵{% endif %}
+                {{ s.vehicle_type }}
+              </span>
+            </div>
+            <div class="card-row">
+              <span class="card-key">Entry time</span>
+              <span class="card-val">{{ s.entry_time }}</span>
+            </div>
+          </div>
+          <form class="release-form" method="POST"
+                action="{{ url_for('parking.release') }}"
+                data-vehicle="{{ s.vehicle_number }}">
+            <input type="hidden" name="vehicle_number" value="{{ s.vehicle_number }}"/>
+            <button type="submit" class="btn-release">&#9650; Release slot</button>
+          </form>
         </div>
-        <select class="filter-sel" id="statusFilter" onchange="filterTable()">
-          <option value="">All statuses</option>
-          <option value="active">Active</option>
-          <option value="completed">Completed</option>
-          <option value="flagged">Flagged</option>
-        </select>
-        <select class="filter-sel" id="typeFilter" onchange="filterTable()">
-          <option value="">All types</option>
-          <option value="car">Car</option>
-          <option value="bike">Bike</option>
-        </select>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="empty">No active sessions — all slots are free</div>
+      {% endif %}
+    </section>
+
+    <!-- SESSION HISTORY -->
+    <section>
+      <div class="sec-head">
+        <div>
+          <div class="sec-title">Session history</div>
+          <div class="sec-sub">All parking sessions</div>
+        </div>
+        <div class="badge blue">{{ all_sessions | length }} total</div>
       </div>
 
-      <table>
-        <thead>
-          <tr>
-            <th>#</th><th>Slot</th><th>Vehicle</th><th>Type</th>
-            <th>Entry</th><th>Exit</th><th>Duration</th><th>Status</th>
-          </tr>
-        </thead>
-        <tbody id="tableBody">
-          {% for s in all_sessions %}
-          <tr data-vehicle="{{ s.vehicle_number | lower }}"
-              data-status="{{ s.status }}"
-              data-type="{{ s.vehicle_type }}">
-            <td class="m">{{ s.session_id }}</td>
-            <td>{{ s.slot_number }}</td>
-            <td>{{ s.vehicle_number }}</td>
-            <td><span class="type-pill {{ s.vehicle_type }}">{{ s.vehicle_type }}</span></td>
-            <td class="m">{{ s.entry_time }}</td>
-            <td class="m">{{ s.exit_time or '—' }}</td>
-            <td class="m">{% if s.duration_minutes %}{{ s.duration_minutes }}m{% else %}—{% endif %}</td>
-            <td><span class="status-pill {{ s.status }}">{{ s.status }}</span></td>
-          </tr>
-          {% else %}
-          <tr><td colspan="8" class="no-rows">No sessions yet</td></tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  </section>
+      <div class="table-wrap">
+        <div class="table-controls">
+          <div class="search-box">
+            <span style="color:var(--hint);font-size:13px">⌕</span>
+            <input type="text" id="searchInput" placeholder="Search vehicle..."
+                   oninput="filterTable()"/>
+          </div>
+          <select class="filter-sel" id="statusFilter" onchange="filterTable()">
+            <option value="">All statuses</option>
+            <option value="active">Active</option>
+            <option value="completed">Completed</option>
+            <option value="flagged">Flagged</option>
+          </select>
+          <select class="filter-sel" id="typeFilter" onchange="filterTable()">
+            <option value="">All types</option>
+            <option value="car">Car</option>
+            <option value="bike">Bike</option>
+          </select>
+        </div>
 
-</main>
+        <table>
+          <thead>
+            <tr>
+              <th>#</th><th>Slot</th><th>Vehicle</th><th>Type</th>
+              <th>Entry</th><th>Exit</th><th>Duration</th><th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody">
+            {% for s in all_sessions %}
+            <tr data-vehicle="{{ s.vehicle_number | lower }}"
+                data-status="{{ s.status }}"
+                data-type="{{ s.vehicle_type }}">
+              <td class="m">{{ s.session_id }}</td>
+              <td>{{ s.slot_number }}</td>
+              <td>{{ s.vehicle_number }}</td>
+              <td><span class="type-pill {{ s.vehicle_type }}">{{ s.vehicle_type }}</span></td>
+              <td class="m">{{ s.entry_time }}</td>
+              <td class="m">{{ s.exit_time or '—' }}</td>
+              <td class="m">{% if s.duration_minutes %}{{ s.duration_minutes }}m{% else %}—{% endif %}</td>
+              <td><span class="status-pill {{ s.status }}">{{ s.status }}</span></td>
+            </tr>
+            {% else %}
+            <tr><td colspan="8" class="no-rows">No sessions yet</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
 
-<footer>ParkSmart &copy; {{ current_year }} — Smart Parking Management System</footer>
+  </div><!-- end ps-main -->
+
+  <footer>Parksmart &copy; {{ current_year }} — Smart parking management system</footer>
+
+</div><!-- end ps-wrap -->
 
 <script src="{{ url_for('static', filename='js/script.js') }}"></script>
 <script>

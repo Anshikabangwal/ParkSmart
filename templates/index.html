@@ -1,275 +1,706 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>ParkSmart — Lot Map</title>
-  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"/>
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root {
-      --bg:      #0d1117; --surface: #161b24; --panel: #1c2433;
-      --border:  rgba(255,255,255,0.08); --text: #dde4ee; --muted: #4a5a6a;
-      --accent:  #00e5a0;
-      --car-free-bg: #0a2018; --car-free-b: #00a85a; --car-free-t: #00e58a;
-      --car-occ-bg:  #220a0a; --car-occ-b:  #bb2222; --car-occ-t:  #ff5252;
-      --bike-free-bg:#0a1e14; --bike-free-b:#00cc88; --bike-free-t:#00e58a;
-      --bike-occ-bg: #221208; --bike-occ-b: #dd5522; --bike-occ-t: #ff8855;
-      --main-lane: #111a26; --car-lane: #101820; --bike-lane: #181210;
-    }
-    body { background:var(--bg); color:var(--text); font-family:'DM Sans',sans-serif; min-height:100vh; display:flex; flex-direction:column; }
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ParkSmart — Lot Map</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+    <style>
+      *, *::before, *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
 
-    /* HEADER */
-    header { display:flex; align-items:center; justify-content:space-between; padding:0 28px; height:54px; background:var(--surface); border-bottom:1px solid var(--border); }
-    .logo { font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:4px; color:var(--accent); }
-    .logo span { color:var(--text); }
-    nav { display:flex; gap:4px; }
-    nav a { padding:6px 16px; border-radius:6px; font-family:'DM Mono',monospace; font-size:11px; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); transition:all 0.2s; }
-    nav a:hover { background:rgba(255,255,255,0.05); color:var(--text); }
-    nav a.active { background:rgba(0,229,160,0.1); color:var(--accent); border:1px solid rgba(0,229,160,0.2); }
-    .hright { display:flex; align-items:center; gap:18px; }
-    .live { display:flex; align-items:center; gap:6px; font-family:'DM Mono',monospace; font-size:11px; color:var(--accent); letter-spacing:1.5px; }
-    .live-dot { width:6px; height:6px; border-radius:50%; background:var(--accent); animation:blink 1.6s ease-in-out infinite; }
-    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
-    #clock { font-family:'DM Mono',monospace; font-size:13px; color:var(--muted); }
+      :root {
+        --bg:            #F5F4F0;
+        --surface:       #ffffff;
+        --border:        #E0DED6;
+        --border-light:  #ECECEA;
+        --text:          #2C2C2A;
+        --muted:         #888780;
+        --hint:          #B4B2A9;
 
-    /* STATS */
-    .stats-bar { display:flex; background:var(--surface); border-bottom:1px solid var(--border); }
-    .stat { flex:1; text-align:center; padding:9px 0; border-right:1px solid var(--border); }
-    .stat:last-child { border-right:none; }
-    .stat-num { font-family:'Bebas Neue',sans-serif; font-size:26px; line-height:1; color:var(--text); }
-    .stat-num.g { color:var(--car-free-t); } .stat-num.r { color:var(--car-occ-t); }
-    .stat-label { font-family:'DM Mono',monospace; font-size:8px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); margin-top:2px; }
+        --car-free-bg:   #EAF3DE;
+        --car-free-b:    #97C459;
+        --car-free-t:    #27500A;
+        --car-occ-bg:    #FCEBEB;
+        --car-occ-b:     #F09595;
+        --car-occ-t:     #791F1F;
 
-    /* LEGEND */
-    .legend { display:flex; gap:14px; align-items:center; padding:8px 24px; background:var(--surface); border-bottom:1px solid var(--border); flex-wrap:wrap; }
-    .legend-item { display:flex; align-items:center; gap:6px; font-family:'DM Mono',monospace; font-size:10px; color:var(--muted); letter-spacing:1px; }
-    .legend-box { width:14px; height:10px; border-radius:2px; border:1.5px solid; }
-    .legend-box.car-free  { background:var(--car-free-bg);  border-color:var(--car-free-b); }
-    .legend-box.car-occ   { background:var(--car-occ-bg);   border-color:var(--car-occ-b); }
-    .legend-box.bike-free { background:var(--bike-free-bg); border-color:var(--bike-free-b); }
-    .legend-box.bike-occ  { background:var(--bike-occ-bg);  border-color:var(--bike-occ-b); }
-    .legend-sep { width:1px; height:14px; background:var(--border); margin:0 4px; }
+        --bike-free-bg:  #FAEEDA;
+        --bike-free-b:   #FAC775;
+        --bike-free-t:   #633806;
+        --bike-occ-bg:   #FCEBEB;
+        --bike-occ-b:    #F09595;
+        --bike-occ-t:    #791F1F;
 
-    /* LOT */
-    .lot-wrap { flex:1; overflow:auto; display:flex; align-items:flex-start; justify-content:center; padding:28px 20px; }
-    .lot { background:#080c12; border:2px solid rgba(255,255,255,0.13); border-radius:12px; overflow:hidden; width:100%; max-width:780px; }
+        --road-bg:       #2C2E2A;
+        --road-dash:     rgba(255,255,255,0.5);
+        --road-arrow:    rgba(255,255,255,0.55);
 
-    /* GATES */
-    .shared-gate { display:flex; align-items:center; height:40px; border-bottom:2px solid rgba(255,255,255,0.1); }
-    .gate-half { flex:1; display:flex; align-items:center; justify-content:center; height:100%; gap:8px; font-family:'Bebas Neue',sans-serif; font-size:13px; letter-spacing:3px; }
-    .gate-half.entry { background:rgba(0,180,100,0.12); color:var(--car-free-t); border-right:2px solid rgba(255,255,255,0.1); }
-    .gate-half.exit  { background:rgba(200,50,50,0.12);  color:var(--car-occ-t); }
-    .lot-body { display:flex; }
-    .main-lane { width:52px; flex-shrink:0; background:var(--main-lane); border-right:2px solid rgba(255,255,255,0.08); display:flex; flex-direction:column; align-items:center; justify-content:space-around; padding:10px 0; position:relative; }
-    .main-lane::before { content:''; position:absolute; top:0; bottom:0; left:50%; transform:translateX(-50%); width:2px; background:repeating-linear-gradient(to bottom,rgba(255,220,50,0.45) 0,rgba(255,220,50,0.45) 14px,transparent 14px,transparent 28px); }
-    .main-lane-arr { font-size:13px; color:rgba(255,255,255,0.12); z-index:2; line-height:1; }
-    .zones { flex:1; display:flex; flex-direction:column; }
-    .zone-block { display:flex; border-bottom:3px solid rgba(255,255,255,0.05); }
-    .zone-block:last-child { border-bottom:none; }
-    .zone-connector { width:52px; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:14px; color:rgba(255,255,255,0.15); border-right:1px solid rgba(255,255,255,0.05); position:relative; }
-    .zone-connector::after { content:''; position:absolute; right:-1px; top:50%; transform:translateY(-50%); width:0; height:0; border-top:6px solid transparent; border-bottom:6px solid transparent; border-left:7px solid rgba(255,255,255,0.12); }
-    .zone-inner { flex:1; display:flex; flex-direction:column; }
-    .zone-header { display:flex; align-items:center; gap:7px; padding:4px 10px; font-family:'DM Mono',monospace; font-size:8px; letter-spacing:2px; text-transform:uppercase; border-bottom:1px solid rgba(255,255,255,0.05); }
-    .zone-header.car  { background:rgba(0,168,90,0.07);  color:#00b868; }
-    .zone-header.bike { background:rgba(220,85,34,0.07); color:#dd7744; }
-    .zone-dot { width:6px; height:6px; border-radius:50%; }
-    .zone-header.car  .zone-dot { background:#00b868; }
-    .zone-header.bike .zone-dot { background:#dd7744; }
-    .zone-lane { height:34px; position:relative; display:flex; align-items:center; justify-content:space-around; padding:0 8px; }
-    .zone-lane.car-lane  { background:var(--car-lane);  border-top:1px solid rgba(0,168,90,0.12);  border-bottom:1px solid rgba(0,168,90,0.12); }
-    .zone-lane.bike-lane { background:var(--bike-lane); border-top:1px solid rgba(220,85,34,0.12); border-bottom:1px solid rgba(220,85,34,0.12); }
-    .zone-lane::before { content:''; position:absolute; left:4%; right:4%; top:50%; transform:translateY(-50%); height:1px; }
-    .zone-lane.car-lane::before  { background:repeating-linear-gradient(to right,rgba(0,200,100,0.25) 0,rgba(0,200,100,0.25) 12px,transparent 12px,transparent 22px); }
-    .zone-lane.bike-lane::before { background:repeating-linear-gradient(to right,rgba(220,130,50,0.25) 0,rgba(220,130,50,0.25) 8px,transparent 8px,transparent 16px); }
-    .zone-lane-arr { font-size:11px; color:rgba(255,255,255,0.1); z-index:2; }
+        --zone-car-head: #EAF3DE;
+        --zone-car-text: #3B6D11;
+        --zone-car-dot:  #639922;
+        --zone-bike-head:#FAEEDA;
+        --zone-bike-text:#854F0B;
+        --zone-bike-dot: #BA7517;
 
-    /* SLOTS */
-    .slot-row { display:flex; }
-    .slot { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; border:1px solid rgba(255,255,255,0.04); position:relative; transition:filter 0.15s,transform 0.15s; }
-    .car-zone  .slot { height:68px; }
-    .bike-zone .slot { height:48px; }
-    .slot.div-right { border-right:2px solid rgba(255,255,255,0.1); }
-    .slot-box { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; border-radius:4px; border:1.5px solid; }
-    .car-zone  .slot-box { width:80%; height:80%; }
-    .bike-zone .slot-box { width:72%; height:76%; }
-    .car-zone  .slot.free .slot-box { background:var(--car-free-bg);  border-color:var(--car-free-b); }
-    .car-zone  .slot.occ  .slot-box { background:var(--car-occ-bg);   border-color:var(--car-occ-b);  opacity:0.85; }
-    .bike-zone .slot.free .slot-box { background:var(--bike-free-bg); border-color:var(--bike-free-b); }
-    .bike-zone .slot.occ  .slot-box { background:var(--bike-occ-bg);  border-color:var(--bike-occ-b);  opacity:0.85; }
-    .slot-icon { line-height:1; }
-    .slot-id { font-family:'Bebas Neue',sans-serif; font-size:11px; letter-spacing:1px; line-height:1; }
-    .car-zone  .slot.free .slot-id { color:var(--car-free-t); }
-    .car-zone  .slot.occ  .slot-id { color:var(--car-occ-t); }
-    .bike-zone .slot.free .slot-id { color:var(--bike-free-t); }
-    .bike-zone .slot.occ  .slot-id { color:var(--bike-occ-t); }
-    .slot-arr { position:absolute; font-size:7px; color:rgba(255,255,255,0.1); line-height:1; }
-    .slot-row:first-child .slot .slot-arr { bottom:2px; }
-    .slot-row:last-child  .slot .slot-arr { top:2px; }
-    .shared-exit { display:flex; align-items:center; justify-content:center; height:38px; background:rgba(200,50,50,0.08); border-top:2px solid rgba(255,255,255,0.1); font-family:'Bebas Neue',sans-serif; font-size:13px; letter-spacing:3px; color:var(--car-occ-t); gap:10px; }
+        --drive-car-dash:#C0DD97;
+        --drive-bike-dash:#FAC775;
+      }
 
-    /* FLASH */
-    .flash-wrap { position:fixed; bottom:20px; right:20px; z-index:600; display:flex; flex-direction:column; gap:8px; }
-    .flash { padding:11px 16px; border-radius:8px; font-family:'DM Mono',monospace; font-size:12px; border-left:3px solid var(--accent); background:var(--panel); animation:slideIn 0.3s ease; }
-    .flash.error { border-color:var(--car-occ-b); }
-    @keyframes slideIn { from{opacity:0;transform:translateX(14px)} to{opacity:1;transform:translateX(0)} }
+      html, body {
+        height: 100%;
+      }
 
-    @media(max-width:600px) {
-      header { padding:0 16px; }
-      .lot-wrap { padding:16px 10px; }
-      .main-lane,.zone-connector { width:36px; }
-      .car-zone .slot { height:54px; }
-      .bike-zone .slot { height:40px; }
-    }
-  </style>
-</head>
-<body>
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: 'DM Sans', sans-serif;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 16px;
+      }
 
-<header>
-  <div class="logo">PARK<span>SMART</span></div>
-  <nav>
-    <a href="{{ url_for('parking.index') }}"     class="active">Lot Map</a>
-    <a href="{{ url_for('parking.camera') }}">Camera</a>
-    <a href="{{ url_for('parking.dashboard') }}">Dashboard</a>
-  </nav>
-  <div class="hright">
-    <div class="live"><div class="live-dot"></div>LIVE</div>
-    <div id="clock"></div>
-  </div>
-</header>
+      /* ── WRAPPER (80% width, full viewport height) ── */
+      .ps-wrap {
+        width: 80%;
+        height: 100%;
+        background: var(--bg);
+        border: 0.5px solid var(--border);
+        border-radius: 12px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+      }
 
-<div class="stats-bar">
-  <div class="stat"><div class="stat-num">{{ total_slots }}</div><div class="stat-label">Total</div></div>
-  <div class="stat"><div class="stat-num g">{{ available_slots }}</div><div class="stat-label">Free</div></div>
-  <div class="stat"><div class="stat-num r">{{ occupied_slots }}</div><div class="stat-label">Occupied</div></div>
-  <div class="stat"><div class="stat-num">{{ reserved_slots }}</div><div class="stat-label">Reserved</div></div>
-</div>
+      /* ── HEADER ── */
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 20px;
+        height: 48px;
+        background: var(--surface);
+        border-bottom: 0.5px solid var(--border);
+        flex-shrink: 0;
+      }
+      .logo {
+        font-family: 'DM Sans', sans-serif;
+        font-size: 15px;
+        font-weight: 500;
+        letter-spacing: 2px;
+        color: var(--text);
+      }
+      .logo span { color: var(--muted); }
 
-<div class="legend">
-  <div class="legend-item"><div class="legend-box car-free"></div>Car free</div>
-  <div class="legend-item"><div class="legend-box car-occ"></div>Car occupied</div>
-  <div class="legend-sep"></div>
-  <div class="legend-item"><div class="legend-box bike-free"></div>Bike free</div>
-  <div class="legend-item"><div class="legend-box bike-occ"></div>Bike occupied</div>
-</div>
+      nav { display: flex; gap: 5px; }
+      nav a {
+        padding: 4px 13px;
+        border-radius: 6px;
+        font-family: 'DM Mono', monospace;
+        font-size: 11px;
+        letter-spacing: 1px;
+        color: var(--muted);
+        border: 0.5px solid transparent;
+        text-decoration: none;
+        transition: background 0.15s;
+      }
+      nav a:hover { background: var(--bg); color: var(--text); }
+      nav a.active {
+        background: var(--car-free-bg);
+        color: var(--zone-car-text);
+        border-color: var(--car-free-b);
+      }
 
-<div class="flash-wrap">
-  {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-      {% for category, message in messages %}
-        <div class="flash {% if category == 'error' %}error{% endif %}">{{ message }}</div>
-      {% endfor %}
-    {% endif %}
-  {% endwith %}
-</div>
+      .hright { display: flex; align-items: center; gap: 14px; }
+      .live {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-family: 'DM Mono', monospace;
+        font-size: 11px;
+        color: var(--zone-car-text);
+        letter-spacing: 1px;
+      }
+      .live-dot {
+        width: 6px; height: 6px;
+        border-radius: 50%;
+        background: var(--zone-car-dot);
+        animation: blink 1.6s ease-in-out infinite;
+      }
+      @keyframes blink {
+        0%, 100% { opacity: 1; }
+        50%       { opacity: 0.3; }
+      }
+      #clock {
+        font-family: 'DM Mono', monospace;
+        font-size: 12px;
+        color: var(--hint);
+      }
 
-<div class="lot-wrap">
-  <div class="lot" id="lotMap">
+      /* ── STATS ── */
+      .stats-bar {
+        display: flex;
+        background: var(--surface);
+        border-bottom: 0.5px solid var(--border);
+        flex-shrink: 0;
+      }
+      .stat {
+        flex: 1;
+        text-align: center;
+        padding: 11px 0;
+        border-right: 0.5px solid var(--border);
+      }
+      .stat:last-child { border-right: none; }
+      .stat-num {
+        font-family: 'DM Sans', sans-serif;
+        font-size: 24px;
+        font-weight: 500;
+        line-height: 1;
+        color: var(--text);
+      }
+      .stat-num.g { color: var(--zone-car-text); }
+      .stat-num.r { color: var(--car-occ-t); }
+      .stat-label {
+        font-family: 'DM Mono', monospace;
+        font-size: 9px;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        color: var(--hint);
+        margin-top: 3px;
+      }
 
-    <div class="shared-gate">
-      <div class="gate-half entry">&#9660; ENTRY</div>
-      <div class="gate-half exit">EXIT &#9650;</div>
-    </div>
+      /* ── LEGEND ── */
+      .legend {
+        display: flex;
+        gap: 14px;
+        align-items: center;
+        padding: 8px 20px;
+        background: var(--surface);
+        border-bottom: 0.5px solid var(--border);
+        flex-wrap: wrap;
+        flex-shrink: 0;
+      }
+      .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-family: 'DM Mono', monospace;
+        font-size: 10px;
+        color: var(--muted);
+        letter-spacing: 1px;
+      }
+      .legend-box {
+        width: 14px; height: 10px;
+        border-radius: 2px;
+        border: 1px solid;
+      }
+      .legend-box.car-free  { background: var(--car-free-bg);  border-color: var(--car-free-b); }
+      .legend-box.car-occ   { background: var(--car-occ-bg);   border-color: var(--car-occ-b); }
+      .legend-box.bike-free { background: var(--bike-free-bg); border-color: var(--bike-free-b); }
+      .legend-box.bike-occ  { background: var(--bike-occ-bg);  border-color: var(--bike-occ-b); }
+      .legend-sep { width: 1px; height: 13px; background: var(--border); margin: 0 2px; }
 
-    <div class="lot-body">
-      <div class="main-lane">
-        <div class="main-lane-arr">&#9660;</div>
-        <div class="main-lane-arr">&#9660;</div>
-        <div class="main-lane-arr">&#9660;</div>
-        <div class="main-lane-arr">&#9660;</div>
-        <div class="main-lane-arr">&#9660;</div>
-        <div class="main-lane-arr">&#9660;</div>
-        <div class="main-lane-arr">&#9660;</div>
+      /* ── LOT OUTER PADDING ── */
+      .lot-outer {
+        padding: 14px;
+        background: var(--bg);
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+      }
+
+      /* ── ENTRY + LOT + EXIT ROW ── */
+      .lot-row {
+        display: flex;
+        align-items: stretch;
+        flex: 1;
+        min-height: 0;
+      }
+
+      /* ── ENTRY ROAD (vertical, left) ── */
+      .road-entry-vert {
+        width: 44px;
+        flex-shrink: 0;
+        background: var(--road-bg);
+        border-radius: 8px 0 0 8px;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: space-evenly;
+        padding: 12px 0;
+        overflow: hidden;
+      }
+      .road-entry-vert::before {
+        content: '';
+        position: absolute;
+        left: 50%; top: 0; bottom: 0;
+        width: 2px;
+        background: repeating-linear-gradient(
+          to bottom,
+          #fff 0, #fff 14px,
+          transparent 14px, transparent 28px
+        );
+        transform: translateX(-50%);
+        opacity: 0.5;
+      }
+      .road-arr-down {
+        width: 0; height: 0;
+        border-left: 7px solid transparent;
+        border-right: 7px solid transparent;
+        border-top: 10px solid var(--road-arrow);
+        z-index: 2;
+        flex-shrink: 0;
+      }
+      .entry-label {
+        font-size: 9px;
+        letter-spacing: 2px;
+        color: rgba(255,255,255,0.6);
+        font-weight: 500;
+        z-index: 2;
+        writing-mode: vertical-rl;
+        text-orientation: mixed;
+        transform: rotate(180deg);
+        font-family: 'DM Mono', monospace;
+      }
+
+      /* ── LOT + EXIT stacked ── */
+      .lot-and-exit {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+      }
+
+      /* ── LOT CARD ── */
+      .lot-card {
+        background: var(--surface);
+        border: 0.5px solid var(--border);
+        overflow: hidden;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+      }
+
+      /* ── ZONES ── */
+      .zones {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+      }
+      .zone-block {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        border-bottom: 0.5px solid var(--border);
+        min-height: 0;
+      }
+      .zone-block:last-child { border-bottom: none; }
+
+      .zone-header {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        padding: 6px 14px;
+        font-family: 'DM Mono', monospace;
+        font-size: 9px;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        border-bottom: 0.5px solid var(--border);
+        flex-shrink: 0;
+      }
+      .zone-header.car  { background: var(--zone-car-head);  color: var(--zone-car-text); }
+      .zone-header.bike { background: var(--zone-bike-head); color: var(--zone-bike-text); }
+      .zone-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+      .zone-header.car  .zone-dot { background: var(--zone-car-dot); }
+      .zone-header.bike .zone-dot { background: var(--zone-bike-dot); }
+
+      .zone-inner {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+      }
+
+      /* ── SLOT ROWS ── */
+      .slot-row {
+        display: flex;
+        flex: 1;
+        min-height: 0;
+      }
+      .slot {
+        flex: 1;
+        padding: 4px;
+        border-right: 0.5px solid var(--border-light);
+        display: flex;
+      }
+      .slot:last-child { border-right: none; }
+
+      .slot-box {
+        flex: 1;
+        border-radius: 5px;
+        border: 1px solid;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 3px;
+      }
+
+      /* car free */
+      .car-zone .slot.free .slot-box {
+        background: var(--car-free-bg);
+        border-color: var(--car-free-b);
+      }
+      .car-zone .slot.free .slot-id { color: var(--car-free-t); }
+
+      /* car occupied */
+      .car-zone .slot.occ .slot-box {
+        background: var(--car-occ-bg);
+        border-color: var(--car-occ-b);
+      }
+      .car-zone .slot.occ .slot-id { color: var(--car-occ-t); }
+
+      /* bike free */
+      .bike-zone .slot.free .slot-box {
+        background: var(--bike-free-bg);
+        border-color: var(--bike-free-b);
+      }
+      .bike-zone .slot.free .slot-id { color: var(--bike-free-t); }
+
+      /* bike occupied */
+      .bike-zone .slot.occ .slot-box {
+        background: var(--bike-occ-bg);
+        border-color: var(--bike-occ-b);
+      }
+      .bike-zone .slot.occ .slot-id { color: var(--bike-occ-t); }
+
+      .slot-icon { line-height: 1; font-size: 15px; }
+      .bike-zone .slot-icon { font-size: 12px; }
+      .slot-id {
+        font-family: 'DM Mono', monospace;
+        font-size: 10px;
+        letter-spacing: 1px;
+        font-weight: 500;
+        line-height: 1;
+      }
+
+      /* ── DRIVE LANES ── */
+      .zone-lane {
+        height: 28px;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: space-around;
+        padding: 0 10px;
+        flex-shrink: 0;
+        border-top: 0.5px solid var(--border);
+        border-bottom: 0.5px solid var(--border);
+        background: var(--bg);
+      }
+      .zone-lane::before {
+        content: '';
+        position: absolute;
+        left: 3%; right: 3%;
+        top: 50%;
+        height: 1px;
+        transform: translateY(-50%);
+      }
+      .zone-lane.car-lane::before {
+        background: repeating-linear-gradient(
+          to right,
+          var(--drive-car-dash) 0, var(--drive-car-dash) 11px,
+          transparent 11px, transparent 20px
+        );
+      }
+      .zone-lane.bike-lane::before {
+        background: repeating-linear-gradient(
+          to right,
+          var(--drive-bike-dash) 0, var(--drive-bike-dash) 9px,
+          transparent 9px, transparent 16px
+        );
+      }
+      .zone-lane-arr {
+        font-size: 11px;
+        color: var(--hint);
+        z-index: 2;
+      }
+
+      /* ── EXIT ROAD (horizontal, full width bottom) ── */
+      .road-exit-full {
+        height: 44px;
+        background: var(--road-bg);
+        border-radius: 0 0 8px 0;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: space-evenly;
+        overflow: hidden;
+        flex-shrink: 0;
+      }
+      .road-exit-full::before {
+        content: '';
+        position: absolute;
+        top: 50%; left: 0; right: 0;
+        height: 2px;
+        background: repeating-linear-gradient(
+          to right,
+          #fff 0, #fff 14px,
+          transparent 14px, transparent 28px
+        );
+        transform: translateY(-50%);
+        opacity: 0.5;
+      }
+      .road-arr-right {
+        width: 0; height: 0;
+        border-top: 7px solid transparent;
+        border-bottom: 7px solid transparent;
+        border-left: 10px solid var(--road-arrow);
+        z-index: 2;
+        flex-shrink: 0;
+      }
+      .exit-label {
+        font-size: 9px;
+        letter-spacing: 2px;
+        color: rgba(255,255,255,0.6);
+        font-weight: 500;
+        z-index: 2;
+        font-family: 'DM Mono', monospace;
+      }
+
+      /* ── FLASH ── */
+      .flash-wrap {
+        position: fixed;
+        bottom: 20px; right: 20px;
+        z-index: 600;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .flash {
+        padding: 11px 16px;
+        border-radius: 8px;
+        font-family: 'DM Mono', monospace;
+        font-size: 12px;
+        border-left: 3px solid var(--zone-car-dot);
+        background: var(--surface);
+        box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+        animation: slideIn 0.3s ease;
+      }
+      .flash.error { border-color: var(--car-occ-b); }
+      @keyframes slideIn {
+        from { opacity: 0; transform: translateX(14px); }
+        to   { opacity: 1; transform: translateX(0); }
+      }
+
+      @media (max-width: 700px) {
+        .ps-wrap { width: 100%; }
+        .road-entry-vert { width: 32px; }
+      }
+    </style>
+  </head>
+  <body>
+
+    <div class="ps-wrap">
+
+      <!-- HEADER -->
+      <header>
+        <div class="logo">Park<span>smart</span></div>
+        <nav>
+          <a href="{{ url_for('parking.index') }}" class="active">Lot Map</a>
+          <a href="{{ url_for('parking.camera') }}">Camera</a>
+          <a href="{{ url_for('parking.dashboard') }}">Dashboard</a>
+        </nav>
+        <div class="hright">
+          <div class="live"><div class="live-dot"></div>Live</div>
+          <div id="clock"></div>
+        </div>
+      </header>
+
+      <!-- STATS -->
+      <div class="stats-bar">
+        <div class="stat">
+          <div class="stat-num">{{ total_slots }}</div>
+          <div class="stat-label">Total</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num g">{{ available_slots }}</div>
+          <div class="stat-label">Free</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num r">{{ occupied_slots }}</div>
+          <div class="stat-label">Occupied</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num">{{ reserved_slots }}</div>
+          <div class="stat-label">Reserved</div>
+        </div>
       </div>
 
-      <div class="zones">
-
-        <!-- CAR ZONE -->
-        <div class="zone-block car-zone">
-          <div class="zone-connector">&#9658;</div>
-          <div class="zone-inner">
-            <div class="zone-header car"><div class="zone-dot"></div>4-wheeler zone — cars &amp; SUVs</div>
-            <div class="slot-row">
-              {% for slot in slots_car_top %}
-              <div class="slot {{ slot.status }} {% if loop.index % 2 == 0 and not loop.last %}div-right{% endif %}">
-                <div class="slot-box">
-                  {% if slot.status == 'occ' %}<div class="slot-icon" style="font-size:14px">🚗</div>{% endif %}
-                  <div class="slot-id">{{ slot.slot_number }}</div>
-                </div>
-                <div class="slot-arr">▼</div>
-              </div>
-              {% endfor %}
-            </div>
-            <div class="zone-lane car-lane">
-              <div class="zone-lane-arr">&#9658;</div><div class="zone-lane-arr">&#9658;</div>
-              <div class="zone-lane-arr">&#9658;</div><div class="zone-lane-arr">&#9658;</div>
-              <div class="zone-lane-arr">&#9658;</div>
-            </div>
-            <div class="slot-row">
-              {% for slot in slots_car_bot %}
-              <div class="slot {{ slot.status }} {% if loop.index % 2 == 0 and not loop.last %}div-right{% endif %}">
-                <div class="slot-box">
-                  {% if slot.status == 'occ' %}<div class="slot-icon" style="font-size:14px">🚗</div>{% endif %}
-                  <div class="slot-id">{{ slot.slot_number }}</div>
-                </div>
-                <div class="slot-arr">▲</div>
-              </div>
-              {% endfor %}
-            </div>
-          </div>
-        </div>
-
-        <!-- BIKE ZONE -->
-        <div class="zone-block bike-zone">
-          <div class="zone-connector" style="color:rgba(220,130,50,0.3)">&#9658;</div>
-          <div class="zone-inner">
-            <div class="zone-header bike"><div class="zone-dot"></div>2-wheeler zone — bikes &amp; scooters</div>
-            <div class="slot-row">
-              {% for slot in slots_bike_top %}
-              <div class="slot {{ slot.status }} {% if loop.index % 2 == 0 and not loop.last %}div-right{% endif %}">
-                <div class="slot-box">
-                  {% if slot.status == 'occ' %}<div class="slot-icon" style="font-size:11px">🛵</div>{% endif %}
-                  <div class="slot-id">{{ slot.slot_number }}</div>
-                </div>
-                <div class="slot-arr">▼</div>
-              </div>
-              {% endfor %}
-            </div>
-            <div class="zone-lane bike-lane">
-              <div class="zone-lane-arr">&#9658;</div><div class="zone-lane-arr">&#9658;</div>
-              <div class="zone-lane-arr">&#9658;</div><div class="zone-lane-arr">&#9658;</div>
-              <div class="zone-lane-arr">&#9658;</div>
-            </div>
-            <div class="slot-row">
-              {% for slot in slots_bike_bot %}
-              <div class="slot {{ slot.status }} {% if loop.index % 2 == 0 and not loop.last %}div-right{% endif %}">
-                <div class="slot-box">
-                  {% if slot.status == 'occ' %}<div class="slot-icon" style="font-size:11px">🛵</div>{% endif %}
-                  <div class="slot-id">{{ slot.slot_number }}</div>
-                </div>
-                <div class="slot-arr">▲</div>
-              </div>
-              {% endfor %}
-            </div>
-          </div>
-        </div>
-
+      <!-- LEGEND -->
+      <div class="legend">
+        <div class="legend-item"><div class="legend-box car-free"></div>Car free</div>
+        <div class="legend-item"><div class="legend-box car-occ"></div>Car occupied</div>
+        <div class="legend-sep"></div>
+        <div class="legend-item"><div class="legend-box bike-free"></div>Bike free</div>
+        <div class="legend-item"><div class="legend-box bike-occ"></div>Bike occupied</div>
       </div>
-    </div>
 
-    <div class="shared-exit">&#9650;&nbsp;&nbsp;SHARED EXIT — ALL VEHICLES&nbsp;&nbsp;&#9650;</div>
+      <!-- FLASH MESSAGES -->
+      <div class="flash-wrap">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="flash {% if category == 'error' %}error{% endif %}">{{ message }}</div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+      </div>
 
-  </div>
-</div>
+      <!-- LOT -->
+      <div class="lot-outer">
+        <div class="lot-row">
 
-<script src="{{ url_for('static', filename='js/script.js') }}"></script>
-<script>
-  function tick() {
-    document.getElementById('clock').textContent =
-      new Date().toLocaleTimeString('en-IN', { hour12: false });
-  }
-  setInterval(tick, 1000); tick();
-</script>
-</body>
+          <!-- ENTRY vertical road -->
+          <div class="road-entry-vert">
+            <div class="entry-label">Entry</div>
+            <div class="road-arr-down"></div>
+            <div class="road-arr-down"></div>
+            <div class="road-arr-down"></div>
+            <div class="road-arr-down"></div>
+            <div class="road-arr-down"></div>
+            <div class="road-arr-down"></div>
+            <div class="road-arr-down"></div>
+            <div class="road-arr-down"></div>
+          </div>
+
+          <!-- LOT CARD + EXIT -->
+          <div class="lot-and-exit">
+            <div class="lot-card" id="lotMap">
+              <div class="zones">
+
+                <!-- CAR ZONE -->
+                <div class="zone-block car-zone">
+                  <div class="zone-header car">
+                    <div class="zone-dot"></div>4-wheeler zone — cars &amp; SUVs
+                  </div>
+                  <div class="zone-inner">
+                    <div class="slot-row">
+                      {% for slot in slots_car_top %}
+                        <div class="slot {{ slot.status }}">
+                          <div class="slot-box">
+                            {% if slot.status == 'occ' %}
+                              <div class="slot-icon">🚗</div>
+                            {% endif %}
+                            <div class="slot-id">{{ slot.slot_number }}</div>
+                          </div>
+                        </div>
+                      {% endfor %}
+                    </div>
+                    <div class="zone-lane car-lane">
+                      <div class="zone-lane-arr">&#9658;</div>
+                      <div class="zone-lane-arr">&#9658;</div>
+                      <div class="zone-lane-arr">&#9658;</div>
+                      <div class="zone-lane-arr">&#9658;</div>
+                      <div class="zone-lane-arr">&#9658;</div>
+                    </div>
+                    <div class="slot-row">
+                      {% for slot in slots_car_bot %}
+                        <div class="slot {{ slot.status }}">
+                          <div class="slot-box">
+                            {% if slot.status == 'occ' %}
+                              <div class="slot-icon">🚗</div>
+                            {% endif %}
+                            <div class="slot-id">{{ slot.slot_number }}</div>
+                          </div>
+                        </div>
+                      {% endfor %}
+                    </div>
+                  </div>
+                </div>
+
+                <!-- BIKE ZONE -->
+                <div class="zone-block bike-zone">
+                  <div class="zone-header bike">
+                    <div class="zone-dot"></div>2-wheeler zone — bikes &amp; scooters
+                  </div>
+                  <div class="zone-inner">
+                    <div class="slot-row">
+                      {% for slot in slots_bike_top %}
+                        <div class="slot {{ slot.status }}">
+                          <div class="slot-box">
+                            {% if slot.status == 'occ' %}
+                              <div class="slot-icon">🛵</div>
+                            {% endif %}
+                            <div class="slot-id">{{ slot.slot_number }}</div>
+                          </div>
+                        </div>
+                      {% endfor %}
+                    </div>
+                    <div class="zone-lane bike-lane">
+                      <div class="zone-lane-arr">&#9658;</div>
+                      <div class="zone-lane-arr">&#9658;</div>
+                      <div class="zone-lane-arr">&#9658;</div>
+                      <div class="zone-lane-arr">&#9658;</div>
+                      <div class="zone-lane-arr">&#9658;</div>
+                    </div>
+                    <div class="slot-row">
+                      {% for slot in slots_bike_bot %}
+                        <div class="slot {{ slot.status }}">
+                          <div class="slot-box">
+                            {% if slot.status == 'occ' %}
+                              <div class="slot-icon">🛵</div>
+                            {% endif %}
+                            <div class="slot-id">{{ slot.slot_number }}</div>
+                          </div>
+                        </div>
+                      {% endfor %}
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            <!-- EXIT full-width road -->
+            <div class="road-exit-full">
+              <div class="exit-label">Exit</div>
+              <div class="road-arr-right"></div>
+              <div class="road-arr-right"></div>
+              <div class="road-arr-right"></div>
+              <div class="road-arr-right"></div>
+              <div class="road-arr-right"></div>
+              <div class="road-arr-right"></div>
+              <div class="road-arr-right"></div>
+              <div class="road-arr-right"></div>
+              <div class="road-arr-right"></div>
+              <div class="road-arr-right"></div>
+              <div class="road-arr-right"></div>
+            </div>
+
+          </div><!-- end lot-and-exit -->
+        </div><!-- end lot-row -->
+      </div><!-- end lot-outer -->
+
+    </div><!-- end ps-wrap -->
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    <script>
+      function tick() {
+        document.getElementById('clock').textContent =
+          new Date().toLocaleTimeString('en-IN', { hour12: false });
+      }
+      setInterval(tick, 1000);
+      tick();
+    </script>
+  </body>
 </html>

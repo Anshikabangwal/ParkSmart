@@ -1,7 +1,7 @@
 # .gitignore for ParkSmart
 # -------------------------
 # Files and folders Git should NOT upload to GitHub
-app.py
+
 # ── Virtual environment ──
 venv/
 env/
