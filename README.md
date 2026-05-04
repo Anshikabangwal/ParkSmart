@@ -1,132 +1,216 @@
-# ParkSmart — Smart Parking System
+# ParkSmart — Smart Parking Management System
 
-A camera-based automated parking management system built with Flask, OpenCV, and EasyOCR.
+A smart parking management system built using **Flask, OpenCV, EasyOCR, SQLite, and Machine Learning** to automate vehicle entry/exit, parking slot allocation, number plate recognition, and parking analytics.
+
+---
+
+## Features
+
+- Vehicle entry and exit simulation
+- Automatic parking slot allocation
+- Number plate recognition using OCR
+- Vehicle type detection (Car/Bike)
+- Parking duration prediction
+- Peak hour traffic prediction
+- Anomaly/overstay detection
+- Live parking dashboard
+- Manual simulation mode
 
 ---
 
 ## Project Structure
 
-```
+```bash
 ParkSmart/
+│
+├── __pycache__/
+│
 ├── database/
+│   ├── models/                 # Trained ML models
 │   ├── __init__.py
-│   └── init_db.py        # Creates tables + seeds 36 slots
+│   ├── init_db.py              # Database initialization
+│   ├── parking_data.csv        # Training dataset
+│   └── parking.db              # SQLite database
+│
 ├── ml_model/
+│   ├── __pycache__/
 │   ├── __init__.py
-│   ├── ocr.py            # EasyOCR number plate reader
-│   ├── predict.py        # OpenCV vehicle type detector
-│   └── camera.py         # Main entry/exit pipeline
+│   ├── analytics.py            # ML model training
+│   ├── camera.py               # Camera simulation logic
+│   ├── generate_data.py        # Synthetic dataset generator
+│   ├── ocr.py                  # Number plate recognition
+│   └── predict.py              # Vehicle type prediction
+│
 ├── models/
+│   ├── __pycache__/
 │   ├── __init__.py
-│   └── db.py             # All database query functions
+│   └── db.py                   # Database operations
+│
 ├── routes/
+│   ├── __pycache__/
 │   ├── __init__.py
-│   └── parking.py        # All Flask URL routes
+│   └── parking.py              # Flask routes
+│
 ├── static/
-│   ├── css/style.css
-│   ├── js/script.js
+│   ├── css/
 │   ├── images/
-│   └── uploads/          # Camera images saved here at runtime
+│   ├── js/
+│   └── uploads/                # Uploaded vehicle images
+│
 ├── templates/
-│   ├── index.html        # Parking lot map
-│   ├── dashboard.html    # Attendant dashboard
-│   └── camera.html       # Camera gate simulation
-├── app.py                # Flask entry point
-├── config.py             # All configuration
-├── requirements.txt      # Python dependencies
-└── README.md
+│   ├── camera.html
+│   ├── dashboard.html
+│   └── index.html
+│
+├── venv/
+├── .gitignore
+├── app.py                      # Main Flask app
+├── config.py                   # Configuration file
+├── README.md
+└── requirements.txt
 ```
 
 ---
 
-## Clone the Repository
+## Tech Stack
 
-> You must be added as a collaborator by the repo owner before cloning.
-> Accept the invitation email from GitHub first.
+| Layer | Technology |
+|------|------------|
+| Backend | Python, Flask |
+| Database | SQLite |
+| Computer Vision | OpenCV |
+| OCR | EasyOCR |
+| Machine Learning | Scikit-learn |
+| Frontend | HTML, CSS, JavaScript |
 
+---
+
+## Machine Learning Models Used
+
+### 1. Peak Hour Predictor
+Predicts parking occupancy level.
+
+- **Algorithm:** Random Forest Classifier
+- **Input:** Hour, day, weekend
+- **Output:** Low / Medium / High traffic
+
+---
+
+### 2. Parking Duration Predictor
+Estimates how long a vehicle may stay parked.
+
+- **Algorithm:** Random Forest Regressor
+- **Input:** Vehicle type, entry hour, weekday/weekend
+- **Output:** Predicted parking duration
+
+---
+
+### 3. Anomaly Detector
+Detects overstayed or unusual parking sessions.
+
+- **Algorithm:** Isolation Forest
+- **Input:** Duration, vehicle type, entry time
+- **Output:** Normal / Anomaly
+
+---
+
+## Installation
+
+### Clone Repository
 ```bash
 git clone https://github.com/Anshikabangwal/ParkSmart.git
 cd ParkSmart
 ```
 
----
-
-## Setup Instructions
-
-### 1. Create virtual environment
+### Create Virtual Environment
 ```bash
 python -m venv venv
-venv\Scripts\activate        # Windows
-source venv/bin/activate     # Mac / Linux
+venv\Scripts\activate
 ```
 
-### 2. Install dependencies
+### Install Dependencies
 ```bash
 pip install -r requirements.txt
 ```
-> Note: First run downloads ~200MB EasyOCR language models automatically. This happens only once.
 
-### 3. Initialize database
+---
+
+## Run Project
+
+### Initialize Database
 ```bash
 python database/init_db.py
 ```
-This creates `database/parking.db` with 36 slots (16 car + 20 bike).
 
-### 4. Run the app
+### Generate Dataset
+```bash
+python ml_model/generate_data.py
+```
+
+### Train Models
+```bash
+python ml_model/analytics.py
+```
+
+### Run Flask App
 ```bash
 python app.py
 ```
 
 ---
 
-## Pages
+## Application Pages
 
-| URL | Page |
-|-----|------|
-| `http://localhost:5000/` | Parking lot map |
-| `http://localhost:5000/camera` | Camera gate simulation |
-| `http://localhost:5000/dashboard` | Attendant dashboard |
-| `http://localhost:5000/api/slots` | Live JSON slot data |
+| Route | Description |
+|------|-------------|
+| `/` | Home page / Parking slots |
+| `/camera` | Camera simulation |
+| `/dashboard` | Analytics dashboard |
 
 ---
 
-## How It Works
+## Working Flow
 
-### Automated Flow (with camera image)
-1. Upload entry image → OpenCV detects car/bike → EasyOCR reads plate
-2. System finds best free slot → creates session → marks slot occupied
-3. Upload exit image → EasyOCR reads plate → finds session → calculates duration → frees slot
+### Entry Process
+1. Upload vehicle image or enter manually
+2. Detect vehicle type
+3. Read number plate
+4. Predict duration
+5. Assign parking slot
 
-### Simulation Flow (without camera)
-1. Go to `/camera` → use **Manual Input** tab
-2. Type vehicle number + select type → click Simulate Entry
-3. To exit → type same vehicle number → click Simulate Exit
+### Exit Process
+1. Upload exit image or enter manually
+2. Match number plate
+3. Calculate duration
+4. Free parking slot
 
 ---
 
 ## Database Tables
 
-| Table | Purpose |
-|-------|---------|
-| `slots` | All 36 parking slots with current status |
-| `vehicles` | Every vehicle detected by entry camera |
-| `sessions` | Every parking visit (entry time → exit time) |
+### slots
+Stores parking slot information.
+
+### vehicles
+Stores detected vehicle details.
+
+### sessions
+Stores entry and exit sessions.
 
 ---
 
-## Important Notes for Collaborators
+## Future Enhancements
 
-- `parking.db` is not on GitHub — run `python database/init_db.py` to create it
-- `venv/` is not on GitHub — create your own virtual environment
-- `static/uploads/` is empty on GitHub — images are saved here at runtime
-- EasyOCR models download automatically on first run (~200MB, one time only)
+- Real-time CCTV integration
+- Payment gateway
+- QR-based booking
+- Mobile app integration
+- Email/SMS alerts
 
 ---
 
-## Tech Stack
+## Author
 
-- **Backend** — Python 3.x + Flask
-- **Database** — SQLite
-- **Vehicle Detection** — OpenCV
-- **Plate Reading** — EasyOCR
-- **Frontend** — HTML + CSS + JS (Jinja2 templates)
+**Anshika Bangwal**
+
+GitHub: https://github.com/Anshikabangwal
